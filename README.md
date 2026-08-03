@@ -40,3 +40,68 @@
 Выложите playbook в репозиторий.
 
 В ответе дайте ссылки на оба репозитория с roles и одну ссылку на репозиторий с playbook.
+
+
+
+Исходный монолитный playbook разделён на три самостоятельные роли:
+
+1. `clickhouse` — внешняя роль версии `1.13`;
+2. `vector_role` — авторская роль установки и настройки Vector;
+3. `lighthouse_role` — авторская роль развёртывания LightHouse.
+
+Репозиторий содержит playbook, который устанавливает роли через `ansible-galaxy`, создаёт базу и таблицу ClickHouse дополнительными задачами, настраивает Vector для отправки событий в ClickHouse и публикует LightHouse через nginx.
+
+## Структура
+
+```
+.
+├── ansible.cfg
+├── group_vars
+│   ├── all.yml
+│   ├── clickhouse.yml
+│   ├── lighthouse.yml
+│   └── vector.yml
+├── inventory
+│   └── prod.yml
+├── requirements.yml
+├── site.yml
+└── SOLUTION.md
+```
+
+## Установка ролей
+
+```
+ansible-galaxy role install -r requirements.yml -p roles --force
+```
+
+SSH-адреса ролей в `requirements.yml` соответствуют условию задания. До запуска необходимо добавить публичный SSH-ключ пользователя в GitHub.
+
+## Подготовка inventory
+
+Адреса `192.0.2.10`, `192.0.2.20` и `192.0.2.30` относятся к документальному диапазону и должны быть заменены реальными адресами управляемых узлов. При необходимости следует изменить пользователя и путь к ключу в `group_vars/all.yml`.
+
+## Проверка синтаксиса
+
+```
+ansible-playbook --syntax-check site.yml
+```
+
+## Запуск
+
+```
+ansible-playbook site.yml
+```
+
+После выполнения:
+
+- ClickHouse принимает HTTP-запросы на порту `8123`;
+- база `logs` содержит таблицу `logs`;
+- Vector формирует демонстрационные syslog-события и записывает нормализованные поля в ClickHouse;
+- LightHouse доступен по адресу `http://<lighthouse-host>:8080/`.
+
+## Проверка результата
+
+```
+curl -sS 'http://<clickhouse-host>:8123/?query=SELECT%20count()%20FROM%20logs.logs'
+curl -I 'http://<lighthouse-host>:8080/'
+```
