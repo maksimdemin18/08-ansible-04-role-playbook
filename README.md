@@ -49,6 +49,20 @@
 2. `vector_role` — авторская роль установки и настройки Vector;
 3. `lighthouse_role` — авторская роль развёртывания LightHouse.
 
+```
+ansible-galaxy role install -r requirements.yml -p roles --force
+zsh: correct 'role' to 'roles' [nyae]? n
+Starting galaxy role install process
+- changing role clickhouse from 1.13 to 1.13
+- extracting clickhouse to /home/maksimd/Disk_DD/netology/devops_all/013_ansible/08-ansible-04-role-solution/08-ansible-04-role-playbook/roles/clickhouse
+- clickhouse (1.13) was installed successfully
+- extracting vector_role to /home/maksimd/Disk_DD/netology/devops_all/013_ansible/08-ansible-04-role-solution/08-ansible-04-role-playbook/roles/vector_role
+- vector_role (1.0.0) was installed successfully
+- extracting lighthouse_role to /home/maksimd/Disk_DD/netology/devops_all/013_ansible/08-ansible-04-role-solution/08-ansible-04-role-playbook/roles/lighthouse_role
+- lighthouse_role (1.0.0) was installed successfully
+
+```
+
 Репозиторий содержит playbook, который устанавливает роли через `ansible-galaxy`, создаёт базу и таблицу ClickHouse дополнительными задачами, настраивает Vector для отправки событий в ClickHouse и публикует LightHouse через nginx.
 
 ## Структура
@@ -73,8 +87,6 @@
 ```
 ansible-galaxy role install -r requirements.yml -p roles --force
 ```
-
-SSH-адреса ролей в `requirements.yml` соответствуют условию задания. До запуска необходимо добавить публичный SSH-ключ пользователя в GitHub.
 
 ## Подготовка inventory
 
