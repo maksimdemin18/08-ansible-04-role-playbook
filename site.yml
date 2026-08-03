@@ -1,0 +1,70 @@
+---
+- name: Install and configure ClickHouse
+  hosts: clickhouse
+  become: true
+  roles:
+    - role: clickhouse
+  post_tasks:
+    - name: Create ClickHouse database for Vector
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8123/
+        method: POST
+        body: CREATE DATABASE IF NOT EXISTS logs
+        status_code: 200
+      changed_when: false
+
+    - name: Create ClickHouse table for Vector events
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8123/
+        method: POST
+        body: >-
+          CREATE TABLE IF NOT EXISTS logs.logs
+          (timestamp DateTime64(3), host String, message String)
+          ENGINE = MergeTree()
+          ORDER BY timestamp
+        status_code: 200
+      changed_when: false
+
+- name: Install and configure Vector
+  hosts: vector
+  become: true
+  vars:
+    vector_clickhouse_endpoint: >-
+      http://{{ hostvars[groups['clickhouse'][0]].ansible_host
+      | default(groups['clickhouse'][0]) }}:8123
+  roles:
+    - role: vector_role
+
+- name: Install and configure LightHouse
+  hosts: lighthouse
+  become: true
+  pre_tasks:
+    - name: Install LightHouse dependencies on Debian family
+      ansible.builtin.apt:
+        name:
+          - git
+          - nginx
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+
+    - name: Install LightHouse dependencies on Red Hat family
+      ansible.builtin.dnf:
+        name:
+          - git
+          - nginx
+        state: present
+      when: ansible_os_family == 'RedHat'
+  roles:
+    - role: lighthouse_role
+  post_tasks:
+    - name: Verify LightHouse HTTP endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ lighthouse_listen_port }}/"
+        method: GET
+        status_code: 200
+      register: lighthouse_http_check
+      retries: 5
+      delay: 2
+      until: lighthouse_http_check.status == 200

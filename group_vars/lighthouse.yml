@@ -1,0 +1,3 @@
+---
+lighthouse_listen_port: 8080
+lighthouse_manage_dependencies: false
